@@ -63,7 +63,7 @@ nodecg.listenFor("livesplit-split-del-top", (m) => {
     const rem = Array.prototype.find.call(collection, (e) => {
         if (e.classList.contains("split-del-top")) return false;
         const name_elem = e.getElementsByClassName("split-name");
-        return name_elem && name_elem.value == m;
+        return name_elem && name_elem[0].innerText == m;
     });
     if (rem) {
         rem.classList.add("split-del-top");
@@ -71,13 +71,17 @@ nodecg.listenFor("livesplit-split-del-top", (m) => {
     }
 });
 
-function document_UndoSplit() {
-    splits.pop();
-
-    // Find newest split that is not in the process of animating out
+nodecg.listenFor("livesplit-undo", (m) => {
+    console.log("undo " + m);
     var collection = document.getElementsByClassName("split-container");
-    const split = Array.prototype.findLast.call(collection, (e) => !e.classList.contains("split-del"));
-    // Add delete anim and delete element on anim end
-    split.classList.add("split-del");
-    split.addEventListener("animationend", () => split.remove());
-}
+    const rem = Array.prototype.findLast.call(collection, (e) => {
+        if (e.classList.contains("split-del")) return false;
+        const name_elem = e.getElementsByClassName("split-name");
+        return name_elem && name_elem[0].innerText == m;
+    });
+    console.log(rem);
+    if (rem) {
+        rem.classList.add("split-del");
+        rem.addEventListener("animationend", () => rem.remove());
+    }
+});
