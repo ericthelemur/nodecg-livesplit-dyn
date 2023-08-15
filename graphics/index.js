@@ -54,10 +54,22 @@ nodecg.listenFor("livesplit-split-add", (m) => {
     document.getElementById("splits-container").appendChild(newSplit);
 });
 
-function document_ResetSplits() {
-    document.getElementById("splits-container").innerHTML = ""
-    splits = []
-}
+nodecg.listenFor("livesplit-reset", (m) => {
+    document.getElementById("splits-container").innerHTML = "";
+});
+
+nodecg.listenFor("livesplit-split-del-top", (m) => {
+    var collection = document.getElementsByClassName("split-container");
+    const rem = Array.prototype.find.call(collection, (e) => {
+        if (e.classList.contains("split-del-top")) return false;
+        const name_elem = e.getElementsByClassName("split-name");
+        return name_elem && name_elem.value == m;
+    });
+    if (rem) {
+        rem.classList.add("split-del-top");
+        rem.addEventListener("animationend", () => rem.remove());
+    }
+});
 
 function document_UndoSplit() {
     splits.pop();

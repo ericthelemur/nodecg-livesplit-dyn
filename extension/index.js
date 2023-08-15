@@ -92,7 +92,8 @@ module.exports = function (nodecg) {
 			nodecg.sendMessage("livesplit-split-del-top", inputname);
 		}
 
-		splits.value[splits.length] = [inputname, time, delta, color];
+		splits.value.push([inputname, time, delta, color]);
+		console.log(splits.value);
 		nodecg.sendMessage("livesplit-split-add", { name: inputname, time: time, delta: delta, color: color });
 	}
 
@@ -103,6 +104,7 @@ module.exports = function (nodecg) {
 
 	function document_UndoSplit() {
 		const rem = splits.value.pop();
+		console.log("rem " + rem);
 		nodecg.sendMessage("livesplit-undo", rem[0]);
 	}
 
