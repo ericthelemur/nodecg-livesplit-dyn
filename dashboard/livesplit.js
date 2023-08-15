@@ -15,7 +15,6 @@ connected.on('change', c => {
 })
 
 NodeCG.waitForReplicants(websocketURL).then(() => {
-    const btn = document.getElementById("connectbtn");
-    btn.value = websocketURL.value;
-    btn.addEventListener("click", connect);
+    document.getElementById("urltext").value = websocketURL.value;
+    document.getElementById("connectbtn").addEventListener("click", connect);
 });
