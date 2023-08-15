@@ -1,3 +1,5 @@
+var WebSocket = require('faye-websocket');
+
 const framerate = 15;
 const splitsMaxAmount = 5;
 //DO NOT EDIT
@@ -12,7 +14,7 @@ var infoPanelPointer = -1;
 
 
 module.exports = function (nodecg) {
-	const websocketURL = nodecg.Replicant('livesplit-url', { defaultValue: "ws://127.0.0.1:8085", persistent: true });
+	const websocketURL = nodecg.Replicant('livesplit-url', { defaultValue: "ws://127.0.0.1:8085", persistent: false });
 	const connected = nodecg.Replicant('livesplit-connected', { defaultValue: false, persistent: false });
 
 	const splits = nodecg.Replicant('livesplit-splits', { defaultValue: [], persistent: true });
@@ -20,25 +22,28 @@ module.exports = function (nodecg) {
 	const infoTime = nodecg.Replicant('livesplit-infotime', { defaultValue: { name: "PB", time: "n/a" } });
 
 	function setupWebsocket(url) {
-		websocketURL.value = url;
 		console.log("trying to connect to " + url);
 		if (websocket) websocket.close();
-		websocket = new WebSocket(url);
+		try {
+			websocket = new WebSocket.Client(url);
+		} catch (e) {
+			console.log(e);
+		}
 
-		websocket.addEventListener("open", (event) => {
+		websocket.on("open", (event) => {
 			console.log("ws connected");
 			interval = setInterval(() => websocket.send("update"), 1000 / framerate);
 			setInterval(document_infoNext, 5000);
 			connected.value = true;
 		});
 
-		websocket.addEventListener("close", (event) => {
+		websocket.on("close", (event) => {
 			console.log("ws disconnected");
 			if (interval != null) { clearInterval(interval) };
 			connected.value = false;
 		});
 
-		websocket.addEventListener("message", (event) => {
+		websocket.on("message", (event) => {
 			var message = event.data;
 			var messageArray = message.split(sMC);
 			// console.log(messageArray);
@@ -101,5 +106,5 @@ module.exports = function (nodecg) {
 		nodecg.sendMessage("livesplit-undo", rem[0]);
 	}
 
-	nodecg.listenFor('livesplit-connect', setupWebsocket);
+	websocketURL.on("change", (newurl, oldurl) => { console.log("url change: " + newurl); if (newurl) setupWebsocket(newurl) });
 }

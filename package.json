@@ -51,5 +51,8 @@
     ]
   },
   "repository": "https://github.com/nodecg/nodecg.git",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "faye-websocket": "^0.11.4"
+  }
 }
