@@ -92,9 +92,15 @@ module.exports = function (nodecg) {
 			nodecg.sendMessage("livesplit-split-del-top", inputname);
 		}
 
-		splits.value.push([inputname, time, delta, color]);
+		var name = inputname.trim();
+		if (name.includes("}")) {
+			document_AddSplit("-" + name.substring(name.indexOf("}") + 1).trim(), time, delta, color);
+			name = name.substring(name.indexOf("{") + 1, name.indexOf("}"))
+		}
+
+		splits.value.push([name, time, delta, color]);
 		console.log(splits.value);
-		nodecg.sendMessage("livesplit-split-add", { name: inputname, time: time, delta: delta, color: color });
+		nodecg.sendMessage("livesplit-split-add", { name: name, time: time, delta: delta, color: color });
 	}
 
 	function document_ResetSplits() {
