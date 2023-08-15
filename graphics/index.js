@@ -1,82 +1,23 @@
-const urlParams = new URLSearchParams(window.location.search);
-//SETTINGS
-const websocketIP = urlParams.get('url') || "ws://127.0.0.1:8085";
-const framerate = 15; //framerate
-const splitsMaxAmount = 5; //maximum amount of splits shown on screen
-
 //DO NOT EDIT
 const sMC = "█"
 
-console.log("trying to connect to " + websocketIP);
-const websocket = new WebSocket(websocketIP);
+const splits = nodecg.Replicant('livesplit-splits');
+const time = nodecg.Replicant('livesplit-time');
+const infoTime = nodecg.Replicant('livesplit-infotime');
 
-websocket.addEventListener("open", (event) => {
-    console.log("connected");
-    interval = setInterval(socket_RequestUpdate, 1000 / framerate);
-    setInterval(document_infoNext, 5000)
+infoTime.on("change", (newval, oldval) => {
+    document.getElementById("info").innerHTML = newval.name;
+    document.getElementById("infotime").innerHTML = newval.time;
 });
 
-websocket.addEventListener("close", (event) => {
-    console.log("disconnected");
-    if (interval != null) { clearInterval(interval) };
-    document.write("Disconnected.");
-});
-
-websocket.addEventListener("message", (event) => {
-    var message = event.data;
-    var messageArray = message.split(sMC);
-    // console.log(messageArray);
-
-    if (messageArray.length > 0) {
-        switch (messageArray[0]) {
-            case "update":
-                document_UpdateInfo(messageArray[1], messageArray[2]);
-                document_UpdateTimer(messageArray[3], messageArray[4], messageArray[5]);
-                if (infoPanelPointer == -1) { document_infoNext(); }
-                break;
-            case "split":
-                document_AddSplit(messageArray[1], messageArray[2], messageArray[3], messageArray[4])
-                break;
-            case "undo":
-                document_UndoSplit();
-                break;
-            case "reset":
-                document_ResetSplits()
-                break;
-        }
-    }
-})
-
-function socket_RequestUpdate() {
-    websocket.send("update");
-}
-
-infoStrings = ["PB", "SoB"];
-timeStrings = ["n/a", "n/a"];
-
-infoPanelPointer = -1;
-
-function document_UpdateInfo(pb, sob) {
-    timeStrings = [pb, sob];
-}
-
-function document_infoNext() {
-    infoPanelPointer += 1
-    if (infoPanelPointer == infoStrings.length) { infoPanelPointer = 0; }
-    document.getElementById("info").innerHTML = infoStrings[infoPanelPointer];
-    document.getElementById("infotime").innerHTML = timeStrings[infoPanelPointer];
-}
-
-function document_UpdateTimer(timer, ms, color) {
+time.on("change", (newval, oldval) => {
     var element = document.getElementById("timer");
-    element.innerHTML = timer;
-    element.style.color = color;
-    var element = document.getElementById("timer-ms");
-    element.innerHTML = "." + ms + "  "
-    element.style.color = color;
-}
-
-splits = [];
+    element.innerHTML = newval.time;
+    element.style.color = newval.color;
+    var mselem = document.getElementById("timer-ms");
+    mselem.innerHTML = newval.ms;
+    mselem.style.color = newval.color;
+});
 
 // Helper function to create nested div structure
 // Many JS frameworks have similar, but keeping no dependencies
@@ -92,6 +33,8 @@ function createElem(tag, classes, content = undefined, post_hook = undefined, ch
     if (post_hook) post_hook(elem);
     return elem;
 }
+
+nodecg.listenFor("livesplit-split-add", (m) => console.log(m));
 
 function document_AddSplit(inputname, time, delta, color) {
     if (splits.length >= splitsMaxAmount) {
