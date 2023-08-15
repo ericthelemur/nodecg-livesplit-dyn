@@ -1,0 +1,200 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Roboto;
+    color: white;
+
+    /* Use to limit max width of splits */
+    --max-width: 500px;
+
+    --corner-radius: 20px;
+    --split-mar: 5px;
+    --split-height: 45px;
+    --entry-pad: 15px;
+    --anim-duration: 1s;
+}
+
+#main {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 20px;
+    max-width: var(--max-width);
+
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+}
+
+#times {
+    position: relative;
+    margin-top: var(--split-mar);
+}
+
+
+#timer-background {
+    min-width: 180px;
+    width: fit-content;
+    padding: 0 10px;
+    height: 100px;
+    line-height: 100px;
+    background: radial-gradient(circle, rgba(30, 30, 30, 0.95) 0%, rgba(0, 0, 0, 0.95) 100%);
+    border-top-left-radius: var(--corner-radius);
+    position: relative;
+}
+
+#timer,
+#timer-ms {
+    width: 100%;
+    height: 100%;
+    font-weight: 300;
+}
+
+#timer {
+    line-height: 100px;
+    font-size: 50px;
+    text-align: center;
+}
+
+#timer-ms {
+    line-height: 30px;
+    font-size: 20px;
+    text-align: right;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+#info-background {
+    width: 100%;
+    height: 45px;
+    display: flex;
+    line-height: 45px;
+    background: radial-gradient(circle, rgba(30, 30, 30, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%);
+    border-bottom-left-radius: var(--corner-radius);
+    border-bottom-right-radius: var(--corner-radius);
+}
+
+#info {
+    font-size: 18px;
+    margin-left: 15px;
+    flex-grow: 1;
+}
+
+#infotime {
+    width: 50%;
+    height: 45px;
+    line-height: 45px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-bottom-right-radius: var(--corner-radius);
+    text-align: center;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+#splits-container {
+    overflow: hidden;
+}
+
+.split-container {
+    position: relative;
+    height: var(--split-height);
+    margin-top: var(--split-mar);
+    overflow: hidden;
+    display: flex;
+}
+
+.split-container div:first-child {
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    background-color: #333b;
+}
+
+.split-container div:last-child {
+    border-top-right-radius: 20px;
+    background-color: #333b;
+}
+
+.split-name {
+    width: fit-content;
+    margin-left: auto;
+
+    padding: 0 var(--entry-pad);
+    line-height: 45px;
+    text-align: left;
+    font-size: 18px;
+    font-weight: 400;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    word-break: break-all;
+    overflow: hidden;
+}
+
+.split-time,
+.split-delta {
+    padding: 0 var(--entry-pad);
+    line-height: 45px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 400;
+    background-color: #333e;
+    min-width: 90px;
+}
+
+/* Animation stuff */
+.split-container {
+    animation-duration: var(--anim-duration);
+    animation-name: split_slideIn;
+    animation-timing-function: cubic-bezier(0, 0.5, 0, 1);
+    animation-iteration-count: 1;
+}
+
+.split-del {
+    animation-name: split_slideOut;
+    animation-timing-function: cubic-bezier(0.5, 1, 0, 1);
+}
+
+.split-del-top {
+    animation-name: split_slideOutTop;
+    animation-timing-function: cubic-bezier(0.5, 1, 0, 1);
+}
+
+@keyframes split_slideIn {
+    from {
+        height: 0;
+        left: 100%;
+    }
+
+    to {
+        height: var(--split-height);
+        left: 0px;
+    }
+}
+
+@keyframes split_slideOut {
+    from {
+        height: var(--split-height);
+        left: 0px;
+    }
+
+    to {
+        height: 0;
+        left: 100%;
+    }
+}
+
+@keyframes split_slideOutTop {
+    from {
+        transform: translate(0, 0);
+    }
+
+    to {
+        transform: translate(100%, 0);
+    }
+}
