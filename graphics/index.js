@@ -34,37 +34,25 @@ function createElem(tag, classes, content = undefined, post_hook = undefined, ch
     return elem;
 }
 
-nodecg.listenFor("livesplit-split-add", (m) => console.log(m));
-
-function document_AddSplit(inputname, time, delta, color) {
-    if (splits.length >= splitsMaxAmount) {
-        var collection = document.getElementsByClassName("split-container")
-        const rem = Array.prototype.find.call(collection, (e) => !e.classList.contains("split-del-top"));
-        rem.classList.add("split-del-top");
-        rem.addEventListener("animationend", () => rem.remove());
-        splits.shift();
-    }
-
-    var name = inputname
-    const subsplit = name[0] == "-";
-    if (subsplit) name = name.substring(1);
+nodecg.listenFor("livesplit-split-add", (m) => {
+    const subsplit = m.name[0] == "-";
+    if (subsplit) m.name = m.name.substring(1);
 
     //section name detection
-    if (name.includes("{")) {
-        name = name.substring(name.indexOf("{") + 1, name.indexOf("}"))
+    if (m.name.includes("{")) {
+        m.name = m.name.substring(m.name.indexOf("{") + 1, m.name.indexOf("}"))
     }
 
     const newSplit = createElem("div", ["split-container"], undefined, undefined, [
-        createElem("div", ["split-name"], name),
-        createElem("div", ["split-delta"], delta, (e) => e.style.color = color),
-        createElem("div", ["split-time"], time)
+        createElem("div", ["split-name"], m.name),
+        createElem("div", ["split-delta"], m.delta, (e) => e.style.color = m.color),
+        createElem("div", ["split-time"], m.time)
     ]);
     //subsplit detection
     if (subsplit) newSplit.classList.add("subsplit");
 
     document.getElementById("splits-container").appendChild(newSplit);
-    splits[splits.length] = [name, time, delta, color];
-}
+});
 
 function document_ResetSplits() {
     document.getElementById("splits-container").innerHTML = ""
