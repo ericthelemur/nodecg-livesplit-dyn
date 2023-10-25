@@ -1,7 +1,6 @@
 var WebSocket = require('faye-websocket');
 
 const framerate = 15;
-const splitsMaxAmount = 5;
 //DO NOT EDIT
 const sMC = "█"
 
@@ -14,7 +13,7 @@ var infoPanelPointer = -1;
 
 
 module.exports = function (nodecg) {
-	const websocketURL = nodecg.Replicant('livesplit-url', { defaultValue: "ws://127.0.0.1:8085", persistent: false });
+	const websocketURL = nodecg.Replicant('livesplit-url', { defaultValue: "ws://127.0.0.1:8085", persistent: true });
 	const connected = nodecg.Replicant('livesplit-connected', { defaultValue: false, persistent: false });
 
 	const splits = nodecg.Replicant('livesplit-splits', { defaultValue: [], persistent: true });
@@ -22,7 +21,7 @@ module.exports = function (nodecg) {
 	const infoTime = nodecg.Replicant('livesplit-infotime', { defaultValue: { name: "PB", time: "n/a" } });
 
 	function setupWebsocket(url) {
-		console.log("trying to connect to " + url);
+		nodecg.log.info("Trying to connect to LiveSplit at " + url);
 		if (websocket) websocket.close();
 		try {
 			websocket = new WebSocket.Client(url);
@@ -31,14 +30,14 @@ module.exports = function (nodecg) {
 		}
 
 		websocket.on("open", (event) => {
-			console.log("ws connected");
+			nodecg.log.info("LiveSplit Connected");
 			interval = setInterval(() => websocket.send("update"), 1000 / framerate);
-			setInterval(document_infoNext, 5000);
+			setInterval(cycleInfo, 5000);
 			connected.value = true;
 		});
 
 		websocket.on("close", (event) => {
-			console.log("ws disconnected");
+			nodecg.log.warn("LiveSplit Disconnected");
 			if (interval != null) { clearInterval(interval) };
 			connected.value = false;
 		});
@@ -51,68 +50,67 @@ module.exports = function (nodecg) {
 			if (messageArray.length > 0) {
 				switch (messageArray[0]) {
 					case "update":
-						document_UpdateInfo(messageArray[1], messageArray[2]);
-						document_UpdateTimer(messageArray[3], messageArray[4], messageArray[5]);
-						if (infoPanelPointer == -1) { document_infoNext(); }
+						updateInfo(messageArray[1], messageArray[2]);
+						updateTime(messageArray[3], messageArray[4], messageArray[5]);
+						if (infoPanelPointer == -1) { cycleInfo(); }
 						break;
 					case "split":
-						document_AddSplit(messageArray[1], messageArray[2], messageArray[3], messageArray[4])
+						addSplit(messageArray[1], messageArray[2], messageArray[3], messageArray[4])
 						break;
 					case "undo":
-						document_UndoSplit();
+						undoSplit();
 						break;
 					case "reset":
-						document_ResetSplits()
+						resetSplits()
 						break;
 				}
 			}
 		})
 	}
 
-	function document_UpdateInfo(pb, sob) {
+	function updateInfo(pb, sob) {
 		timeStrings = [pb, sob];
 	}
 
-	function document_infoNext() {
+	function cycleInfo() {
 		infoPanelPointer += 1
 		if (infoPanelPointer == infoStrings.length) { infoPanelPointer = 0; }
 		infoTime.value.name = infoStrings[infoPanelPointer];
 		infoTime.value.time = timeStrings[infoPanelPointer];
 	}
 
-	function document_UpdateTimer(timer, ms, color) {
-		time.value.time = timer;
-		time.value.ms = "." + ms + "  ";
-		time.value.color = color;
+	function updateTime(timer, ms, color) {
+		time.value = { time: timer, ms: "." + ms + "  ", color: color }
 	}
 
-	function document_AddSplit(inputname, time, delta, color) {
-		if (splits.value.length >= splitsMaxAmount) {
-			splits.value.shift();
-			nodecg.sendMessage("livesplit-split-del-top", inputname);
-		}
-
+	function addSplit(inputname, time, delta, color) {
 		var name = inputname.trim();
 		if (name.includes("}")) {
-			document_AddSplit("-" + name.substring(name.indexOf("}") + 1).trim(), time, delta, color);
+			// Push split and subsplit when end of section
+			addSplit("-" + name.substring(name.indexOf("}") + 1).trim(), time, delta, color);
 			name = name.substring(name.indexOf("{") + 1, name.indexOf("}"))
 		}
 
-		splits.value.push([name, time, delta, color]);
-		console.log(splits.value);
-		nodecg.sendMessage("livesplit-split-add", { name: name, time: time, delta: delta, color: color });
+		splits.value.push({ name: name, time: time, delta: delta, color: color });
 	}
 
-	function document_ResetSplits() {
+	function resetSplits() {
 		splits.value = [];
-		nodecg.sendMessage("livesplit-reset");
 	}
 
-	function document_UndoSplit() {
-		const rem = splits.value.pop();
-		console.log("rem " + rem);
-		nodecg.sendMessage("livesplit-undo", rem[0]);
+	function undoSplit() {
+		splits.value.pop();
 	}
 
-	websocketURL.on("change", (newurl, oldurl) => { console.log("url change: " + newurl); if (newurl) setupWebsocket(newurl) });
+	// Reconnect on url change
+	websocketURL.on("change", (newurl, oldurl) => {
+		nodecg.log.info("Changing Livesplit URL: " + newurl);
+		if (newurl) setupWebsocket(newurl)
+	});
+
+	// If disconnected, retry connection
+	setInterval(() => {
+		if (!connected.value && websocketURL.value)
+			setupWebsocket(websocketURL.value)
+	}, 5 * 1000);
 }

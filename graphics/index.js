@@ -1,6 +1,9 @@
 //DO NOT EDIT
 const sMC = "█"
 
+// Number of splits displayed at a time
+const splitsMaxAmount = 5;
+
 const splits = nodecg.Replicant('livesplit-splits');
 const time = nodecg.Replicant('livesplit-time');
 const infoTime = nodecg.Replicant('livesplit-infotime');
@@ -34,54 +37,74 @@ function createElem(tag, classes, content = undefined, post_hook = undefined, ch
     return elem;
 }
 
-nodecg.listenFor("livesplit-split-add", (m) => {
-    const subsplit = m.name[0] == "-";
-    if (subsplit) m.name = m.name.substring(1);
+function createSplit(m) {
+    var name = String(m.name);
+    const subsplit = name[0] == "-";
+    if (subsplit) name = name.substring(1);
 
     //section name detection
-    if (m.name.includes("{")) {
-        m.name = m.name.substring(m.name.indexOf("{") + 1, m.name.indexOf("}"))
+    if (name.includes("{")) {
+        name = name.substring(name.indexOf("{") + 1, name.indexOf("}"))
     }
 
     const newSplit = createElem("div", ["split-container"], undefined, undefined, [
-        createElem("div", ["split-name"], m.name),
+        createElem("div", ["split-name"], name),
         createElem("div", ["split-delta"], m.delta, (e) => e.style.color = m.color),
         createElem("div", ["split-time"], m.time)
     ]);
+    newSplit.dataset.name = m.name;
     //subsplit detection
     if (subsplit) newSplit.classList.add("subsplit");
+    return newSplit;
+}
 
-    document.getElementById("splits-container").appendChild(newSplit);
-});
+splits.on('change', (newSplits) => {
+    // On change, find diff with existing HTML and animate
+    nodecg.log.info("new splits: " + newSplits);
+    if (newSplits.length > splitsMaxAmount)
+        newSplits = newSplits.slice(newSplits.length - splitsMaxAmount)
 
-nodecg.listenFor("livesplit-reset", (m) => {
-    document.getElementById("splits-container").innerHTML = "";
-});
+    var newNames = newSplits == null ? [] : newSplits.map((e) => e.name);
+    console.log(newNames);
+    var splitsDict = Object.assign({}, ...newSplits.map((x) => ({ [x.name]: x })));
 
-nodecg.listenFor("livesplit-split-del-top", (m) => {
-    var collection = document.getElementsByClassName("split-container");
-    const rem = Array.prototype.find.call(collection, (e) => {
-        if (e.classList.contains("split-del-top")) return false;
-        const name_elem = e.getElementsByClassName("split-name");
-        return name_elem && name_elem[0].innerText == m;
-    });
-    if (rem) {
-        rem.classList.add("split-del-top");
-        rem.addEventListener("animationend", () => rem.remove());
+    var cont = document.getElementById("splits-container");
+    var docChildren = Array.from(cont.children)
+    var docNames = docChildren == null ? [] : docChildren.map((e) => e.dataset.name);
+    console.log(docNames);
+    var elemsDict = Object.assign({}, ...docChildren.map((x) => ({ [x.dataset.name]: x })));
+
+    var diff = Diff.diffArrays(docNames, newNames);
+    console.log(diff);
+    var i = 0;
+    for (var d of diff) {
+        if (d.added) {
+            if (i + 1 < docNames.length) {
+                for (var v of d.value) {
+                    cont.insertBefore(createSplit(splitsDict[v]), elemsDict[docNames[i + 1]])
+                }
+            } else {
+                for (var v of d.value) {
+                    cont.appendChild(createSplit(splitsDict[v]))
+                }
+            }
+        }
+        else if (d.removed) {
+            for (var v of d.value) {
+                var rem = elemsDict[v];
+                if (rem) {
+                    rem.classList.add("split-del");
+                    rem.addEventListener("animationend", (e) => e.target.remove());
+                }
+            }
+            i += d.count;
+        }
+        else {
+            i += d.count;
+        }
     }
-});
 
-nodecg.listenFor("livesplit-undo", (m) => {
-    console.log("undo " + m);
-    var collection = document.getElementsByClassName("split-container");
-    const rem = Array.prototype.findLast.call(collection, (e) => {
-        if (e.classList.contains("split-del")) return false;
-        const name_elem = e.getElementsByClassName("split-name");
-        return name_elem && name_elem[0].innerText == m;
-    });
-    console.log(rem);
-    if (rem) {
-        rem.classList.add("split-del");
-        rem.addEventListener("animationend", () => rem.remove());
+    for (var i = docChildren.length - 1; i >= 0; i--) {
+
     }
 });
