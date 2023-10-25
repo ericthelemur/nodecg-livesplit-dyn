@@ -22,6 +22,13 @@ time.on("change", (newval, oldval) => {
     mselem.style.color = newval.color;
 });
 
+nodecg.listenFor("livesplit-reset", (m) => {
+    var cont = document.getElementById("splits-container");
+    for (var c of cont.children) {
+        c.remove();
+    }
+});
+
 // Helper function to create nested div structure
 // Many JS frameworks have similar, but keeping no dependencies
 function createElem(tag, classes, content = undefined, post_hook = undefined, children = []) {

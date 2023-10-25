@@ -33,5 +33,6 @@ NodeCG.waitForReplicants(websocketURL).then(() => {
 NodeCG.waitForReplicants(splits).then(() => {
     document.getElementById("clearbtn").addEventListener("click", () => {
         splits.value = [];
+        nodecg.sendMessage("livesplit-reset");
     });
 });
