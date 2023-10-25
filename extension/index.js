@@ -88,7 +88,7 @@ module.exports = function (nodecg) {
 		if (name.includes("}")) {
 			// Push split and subsplit when end of section
 			addSplit("-" + name.substring(name.indexOf("}") + 1).trim(), time, delta, color);
-			name = name.substring(name.indexOf("{") + 1, name.indexOf("}"))
+			name = "{" + name.substring(name.indexOf("{") + 1, name.indexOf("}")) + "}"
 		}
 
 		splits.value.push({ name: name, time: time, delta: delta, color: color });
@@ -99,7 +99,11 @@ module.exports = function (nodecg) {
 	}
 
 	function undoSplit() {
-		splits.value.pop();
+		const rem = splits.value.pop();
+		nodecg.log.warn("Removing " + rem);
+		if (rem.name.includes("}")) {
+			splits.value.pop();
+		}
 	}
 
 	// Reconnect on url change

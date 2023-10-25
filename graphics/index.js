@@ -76,7 +76,7 @@ splits.on('change', (newSplits) => {
     var splitsDict = Object.assign({}, ...newSplits.map((x) => ({ [x.name]: x })));
 
     var cont = document.getElementById("splits-container");
-    var docChildren = Array.from(cont.children)
+    var docChildren = Array.from(cont.children).filter((c) => !c.classList.contains("split-del"))
     var docNames = docChildren == null ? [] : docChildren.map((e) => e.dataset.name);
     console.log(docNames);
     var elemsDict = Object.assign({}, ...docChildren.map((x) => ({ [x.dataset.name]: x })));
@@ -88,7 +88,7 @@ splits.on('change', (newSplits) => {
         if (d.added) {
             if (i + 1 < docNames.length) {
                 for (var v of d.value) {
-                    cont.insertBefore(createSplit(splitsDict[v]), elemsDict[docNames[i + 1]])
+                    cont.insertBefore(createSplit(splitsDict[v]), elemsDict[docNames[i]])
                 }
             } else {
                 for (var v of d.value) {
@@ -109,9 +109,5 @@ splits.on('change', (newSplits) => {
         else {
             i += d.count;
         }
-    }
-
-    for (var i = docChildren.length - 1; i >= 0; i--) {
-
     }
 });
