@@ -31,7 +31,7 @@ module.exports = function (nodecg) {
 
 		websocket.on("open", (event) => {
 			nodecg.log.info("LiveSplit Connected");
-			interval = setInterval(() => websocket.send("update"), 1000 / framerate);
+			interval = setInterval(() => { if (websocket) websocket.send("update") }, 1000 / framerate);
 			setInterval(cycleInfo, 5000);
 			connected.value = true;
 		});
@@ -39,7 +39,7 @@ module.exports = function (nodecg) {
 		websocket.on("close", (event) => {
 			nodecg.log.warn("LiveSplit Disconnected");
 			if (interval != null) { clearInterval(interval) };
-			connected.value = false;
+			if (connected.value) connected.value = false;
 		});
 
 		websocket.on("message", (event) => {
@@ -107,14 +107,27 @@ module.exports = function (nodecg) {
 	}
 
 	// Reconnect on url change
-	websocketURL.on("change", (newurl, oldurl) => {
+	websocketURL.on("change", (newurl) => {
 		nodecg.log.info("Changing Livesplit URL: " + newurl);
-		if (newurl) setupWebsocket(newurl)
+		if (newurl) {
+			setupWebsocket(newurl)
+		} else if (websocket) {
+			websocket.close();
+			websocket = undefined;
+		}
+	});
+
+	connected.on("change", (newval) => {
+		if (newval === null && websocket) {
+			nodecg.log.info("Disabling connection");
+			websocket.close();
+			websocket = undefined;
+		}
 	});
 
 	// If disconnected, retry connection
 	setInterval(() => {
-		if (!connected.value && websocketURL.value)
+		if (connected.value === false && websocketURL.value)
 			setupWebsocket(websocketURL.value)
 	}, 5 * 1000);
 }

@@ -6,7 +6,8 @@ const time = nodecg.Replicant('livesplit-time');
 const infoTime = nodecg.Replicant('livesplit-infotime');
 
 function updateText(conn, url) {
-    const newVal = (conn ? "✓ Connected to " : "✕ Disconnected from ") + url;
+    var newVal = (conn ? "✓ Connected to " : "✕ Disconnected from ") + url;
+    if (conn === null) newVal = "? Disabled"
     const elem = document.getElementById("connected");
     if (elem.innerText != newVal) {
         elem.innerText = newVal;
@@ -14,24 +15,30 @@ function updateText(conn, url) {
     }
 }
 
-connected.on('change', c => {
-    updateText(c, websocketURL.value);
-})
+NodeCG.waitForReplicants(websocketURL, splits, connected).then(() => {
+    connected.on('change', c => {
+        updateText(c, websocketURL.value);
+    })
 
-websocketURL.on('change', url => {
-    updateText(connected.value, url);
-})
+    websocketURL.on('change', url => {
+        updateText(connected.value, url);
+    })
+    updateText(connected.value, websocketURL.value);
 
-NodeCG.waitForReplicants(websocketURL).then(() => {
     document.getElementById("urltext").value = websocketURL.value;
     document.getElementById("connectbtn").addEventListener("click", () => {
         const text = document.getElementById("urltext");
+        if (connected.value === null) connected.value = false;
         websocketURL.value = text.value;
     });
-});
 
-NodeCG.waitForReplicants(splits).then(() => {
     document.getElementById("clearbtn").addEventListener("click", () => {
+        splits.value = [];
+        nodecg.sendMessage("livesplit-reset");
+    });
+
+    document.getElementById("disablebtn").addEventListener("click", () => {
+        connected.value = null;
         splits.value = [];
         nodecg.sendMessage("livesplit-reset");
     });
