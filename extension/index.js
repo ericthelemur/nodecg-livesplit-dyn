@@ -14,7 +14,7 @@ var infoPanelPointer = -1;
 
 module.exports = function (nodecg) {
 	const websocketURL = nodecg.Replicant('livesplit-url', { defaultValue: "ws://127.0.0.1:8085", persistent: true });
-	const connected = nodecg.Replicant('livesplit-connected', { defaultValue: false, persistent: false });
+	const connected = nodecg.Replicant('livesplit-connected', { defaultValue: nodecg.bundleConfig.enabled ? false : null, persistent: false });
 
 	const splits = nodecg.Replicant('livesplit-splits', { defaultValue: [], persistent: true });
 	const time = nodecg.Replicant('livesplit-time', { defaultValue: { time: "##:##", ms: "##", color: "#FFFFFF" }, persistent: false });
@@ -125,9 +125,14 @@ module.exports = function (nodecg) {
 		}
 	});
 
+	var failures = 0;
 	// If disconnected, retry connection
 	setInterval(() => {
-		if (connected.value === false && websocketURL.value)
+		if (connected.value === false && failures < nodecg.bundleConfig.retries && websocketURL.value) {
 			setupWebsocket(websocketURL.value)
+			failures = connected.value === false ? failures + 1 : 0;
+		} else if (failures >= nodecg.bundleConfig.retries) {
+			nodecg.log.warn(`Over ${nodecg.bundleConfig.retries} failed connection attempts, stopping retrying`)
+		}
 	}, 5 * 1000);
 }

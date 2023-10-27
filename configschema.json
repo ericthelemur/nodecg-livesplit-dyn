@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "enabled": {
+            "description": "Whether to attempt LiveSplit connections",
+            "type": "boolean",
+            "default": true
+        },
+        "retries": {
+            "description": "Number of retries on a lost or failed connection (at 5s intervals)",
+            "type": "integer",
+            "default": 10
+        }
+    },
+    "required": [
+        "enabled",
+        "retries"
+    ]
+}
