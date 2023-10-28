@@ -131,8 +131,9 @@ module.exports = function (nodecg) {
 		if (connected.value === false && failures < nodecg.bundleConfig.retries && websocketURL.value) {
 			setupWebsocket(websocketURL.value)
 			failures = connected.value === false ? failures + 1 : 0;
-		} else if (failures >= nodecg.bundleConfig.retries) {
-			nodecg.log.warn(`Over ${nodecg.bundleConfig.retries} failed connection attempts, stopping retrying`)
+		} else if (failures == nodecg.bundleConfig.retries) {
+			nodecg.log.warn(`Over ${nodecg.bundleConfig.retries} failed connection attempts, stopping retrying`);
+			failures++;
 		}
 	}, 5 * 1000);
 }
